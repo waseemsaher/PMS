@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { COLORS } from '../../constants/colors';
 import { useTheme } from 'react-native-paper';
 import { Platform } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const theme = useTheme();

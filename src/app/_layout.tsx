@@ -6,7 +6,7 @@ import { NotificationService } from '../notifications/NotificationService';
 import { useEffect, useState } from 'react';
 import { initializeDatabase } from '../database/database';
 import { View, ActivityIndicator } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function RootLayout() {
   const [isDbReady, setIsDbReady] = useState(false);
