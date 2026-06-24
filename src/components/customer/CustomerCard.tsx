@@ -42,6 +42,16 @@ export default function CustomerCard({
     return COLORS.primary;
   };
 
+  const aggregatedRentals = rentals.reduce((acc, current) => {
+    const existing = acc.find(item => item.name === current.name);
+    if (existing) {
+      existing.quantity += current.quantity;
+    } else {
+      acc.push({ ...current });
+    }
+    return acc;
+  }, [] as typeof rentals);
+
   return (
     <Card style={[styles.card, isExpired && styles.cardExpired]} elevation={2}>
       <Card.Content>
@@ -62,10 +72,10 @@ export default function CustomerCard({
           </Chip>
         </View>
 
-        {rentals.length > 0 && (
+        {aggregatedRentals.length > 0 && (
           <View style={styles.rentalsContainer}>
             <Text style={styles.rentalsTitle}>Extras:</Text>
-            {rentals.map((r, i) => (
+            {aggregatedRentals.map((r, i) => (
               <Text key={i} style={styles.rentalItem}>
                 • {r.quantity}x {r.name}
               </Text>
