@@ -104,4 +104,28 @@ export class SessionService {
       );
     });
   }
+
+  /**
+   * Adds an extra rental item to an active session and updates the total amount.
+   */
+  static async addRentalToSession(sessionId: number, rentalItemId: number, quantity: number, price: number): Promise<void> {
+    const db = await getDatabase();
+    
+    await db.withTransactionAsync(async () => {
+      const session = await db.getFirstAsync<Session>('SELECT * FROM Sessions WHERE id = ?', [sessionId]);
+      if (!session) throw new Error('Session not found');
+
+      // Add to SessionRentals
+      await RentalRepository.addSessionRental(sessionId, rentalItemId, quantity, price, false);
+
+      // Increase Session total_amount
+      const amountToAdd = quantity * price;
+      const newTotalAmount = (session.total_amount || 0) + amountToAdd;
+
+      await db.runAsync(
+        'UPDATE Sessions SET total_amount = ? WHERE id = ?',
+        [newTotalAmount, sessionId]
+      );
+    });
+  }
 }

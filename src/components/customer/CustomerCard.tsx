@@ -9,15 +9,17 @@ export interface CustomerCardProps {
   peopleCount: number;
   sessionType: string;
   paymentStatus: string;
-  remainingTime: string; // Temporarily a string, Sprint 5 will introduce actual dynamic timer
+  remainingTime: string;
   isWarning: boolean;
   isExpired: boolean;
   onEdit: () => void;
   onExtend: () => void;
+  onExtras: () => void;
   onFinish: () => void;
 }
 
 export default function CustomerCard({
+  id,
   customerName,
   peopleCount,
   sessionType,
@@ -27,42 +29,46 @@ export default function CustomerCard({
   isExpired,
   onEdit,
   onExtend,
+  onExtras,
   onFinish,
 }: CustomerCardProps) {
-  const theme = useTheme();
-
-  // Determine card background color based on status
-  let backgroundColor = COLORS.surface;
-  if (isExpired) backgroundColor = COLORS.danger + '20'; // Light red
-  else if (isWarning) backgroundColor = COLORS.warning + '30'; // Light yellow
+  const getCardColor = () => {
+    if (isExpired) return COLORS.danger;
+    if (isWarning) return COLORS.warning;
+    return COLORS.primary;
+  };
 
   return (
-    <Card style={[styles.card, { backgroundColor }]} elevation={1}>
+    <Card style={styles.card} elevation={2}>
       <Card.Content>
         <View style={styles.headerRow}>
           <Text variant="titleLarge" style={styles.name}>{customerName}</Text>
-          <Badge size={24} style={styles.peopleBadge}>👥 {peopleCount}</Badge>
+          <View style={[styles.timeBadge, { backgroundColor: getCardColor() }]}>
+            <Text style={styles.timeText}>{remainingTime}</Text>
+          </View>
         </View>
 
         <View style={styles.detailsRow}>
-          <Text variant="bodyMedium">Type: {sessionType}</Text>
-          <Text variant="bodyMedium">Payment: {paymentStatus}</Text>
+          <Chip icon="account-group" compact style={styles.chip}>{peopleCount} pax</Chip>
+          <Chip icon="clock-outline" compact style={styles.chip}>
+            {sessionType.replace('_', ' ')}
+          </Chip>
+          <Chip icon="cash" compact style={[styles.chip, paymentStatus === 'UNPAID' ? styles.unpaidChip : null]}>
+            {paymentStatus}
+          </Chip>
         </View>
 
-        <View style={styles.timerRow}>
-          <Text variant="headlineMedium" style={[
-            styles.timer,
-            isExpired ? { color: COLORS.danger } : isWarning ? { color: '#b45309' } : { color: COLORS.primary }
-          ]}>
-            ⏱ {remainingTime}
-          </Text>
+        <Divider style={styles.divider} />
+
+        <View style={styles.actionsRow}>
+          <Button icon="pencil" mode="text" compact onPress={onEdit}>Edit</Button>
+          <Button icon="clock-plus" mode="text" compact onPress={onExtend}>Extend</Button>
+          <Button icon="plus-box" mode="text" compact onPress={onExtras}>Extras</Button>
+          <Button icon="check-circle" mode="contained" buttonColor={COLORS.success} compact onPress={onFinish}>
+            Finish
+          </Button>
         </View>
       </Card.Content>
-      <Card.Actions style={styles.actions}>
-        <IconButton icon="pencil" mode="contained-tonal" size={20} onPress={onEdit} />
-        <IconButton icon="clock-plus-outline" mode="contained-tonal" size={20} onPress={onExtend} />
-        <IconButton icon="check-circle" mode="contained" size={20} iconColor="#fff" containerColor={COLORS.success} onPress={onFinish} />
-      </Card.Actions>
     </Card>
   );
 }

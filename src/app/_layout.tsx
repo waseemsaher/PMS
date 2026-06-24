@@ -44,6 +44,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="add-customer" options={{ presentation: 'modal', title: 'Add Customer' }} />
+        <Stack.Screen name="add-extra" options={{ presentation: 'modal', title: 'Add Extras' }} />
         <Stack.Screen name="edit-customer" options={{ presentation: 'modal', title: 'Edit Customer' }} />
         <Stack.Screen name="+not-found" />
       </Stack>

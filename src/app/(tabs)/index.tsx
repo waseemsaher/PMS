@@ -110,6 +110,7 @@ export default function HomeScreen() {
                   ]
                 );
               }}
+              onExtras={() => router.push({ pathname: '/add-extra', params: { id: item.id } })}
               onFinish={() => handleFinish(item.id, item.customer_name)}
             />
           )}
