@@ -2,7 +2,7 @@
   "expo": {
     "name": "PoolTimer",
     "slug": "PoolTimer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pooltimer",
@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.poolmanager.app",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
