@@ -29,16 +29,33 @@ export class SessionService {
       // 3. Fetch Rentals
       const rentals = await RentalRepository.getRentalsForSession(sessionId);
 
-      // 4. Calculate actual duration and final price (simplified for now, assumes open session logic or static logic)
+      // 4. Calculate actual duration and final price
       const currentTimestamp = dayjs().unix();
       const actualDuration = Math.round((currentTimestamp - session.start_timestamp) / 60);
       
-      // Calculate total amount (mocked basic logic for now, PRD relies on Settings for pricing)
-      // If it's a fixed session, the amount is usually set at creation. If open, calculate here.
-      const totalAmount = session.total_amount || 0;
-      
-      const extrasAmount = rentals.reduce((sum, r) => sum + (r.price * r.quantity), 0);
-      const hoursAmount = totalAmount - extrasAmount;
+      let totalAmount = session.total_amount || 0;
+      let hoursAmount = 0;
+
+      if (session.is_open_session) {
+        // Calculate price based on actual time for OPEN sessions
+        const settingsResult = await db.getFirstAsync<any>('SELECT hour_price FROM Settings WHERE id = 1');
+        if (settingsResult && settingsResult.hour_price) {
+          hoursAmount = (settingsResult.hour_price / 60) * actualDuration;
+        }
+        totalAmount += hoursAmount;
+      } else {
+        // For fixed sessions, the hours amount was included in total_amount
+        const extrasAmount = rentals.reduce((sum, r) => sum + (r.price * r.quantity), 0);
+        hoursAmount = Math.max(0, totalAmount - extrasAmount);
+      }
+
+      // If the session is finished, we assume any unpaid balance is now paid for the hours
+      // In a real app, a payment modal would pop up here. For now, we auto-pay the open hours.
+      let finalHoursPaid = session.hours_amount_paid || 0;
+      if (session.is_open_session) {
+         finalHoursPaid += hoursAmount;
+         session.payment_status = 'PAID';
+      }
 
       // 5. Insert into History
       await HistoryRepository.createHistoryRecord({
@@ -53,7 +70,7 @@ export class SessionService {
         notes: customer.notes,
         payment_status: session.payment_status,
         total_amount: totalAmount,
-        hours_amount_paid: session.hours_amount_paid || 0,
+        hours_amount_paid: finalHoursPaid,
         extras_amount_paid: session.extras_amount_paid || 0,
       });
 
