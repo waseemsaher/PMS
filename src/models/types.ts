@@ -73,6 +73,12 @@ export interface DashboardCache {
   today_revenue: number;
   month_revenue: number;
   lifetime_revenue: number;
+  today_hours_revenue: number;
+  today_extras_revenue: number;
+  month_hours_revenue: number;
+  month_extras_revenue: number;
+  lifetime_hours_revenue: number;
+  lifetime_extras_revenue: number;
   today_customers: number;
   month_customers: number;
   lifetime_customers: number;

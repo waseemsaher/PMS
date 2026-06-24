@@ -23,11 +23,17 @@ export default function DashboardScreen() {
     );
   }
 
-  const StatCard = ({ title, value, subtitle }: { title: string, value: string | number, subtitle: string }) => (
+  const StatCard = ({ title, total, hours, extras, subtitle }: { title: string, total: number, hours: number, extras: number, subtitle: string }) => (
     <Card style={styles.card} elevation={1}>
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
-        <Text variant="headlineLarge" style={styles.cardValue}>{value}</Text>
+        <Text variant="headlineLarge" style={styles.cardValue}>{total} EGP</Text>
+        
+        <View style={styles.breakdownRow}>
+          <Text variant="bodyMedium" style={styles.breakdownText}>⏱️ {hours} EGP</Text>
+          <Text variant="bodyMedium" style={styles.breakdownText}>🩳 {extras} EGP</Text>
+        </View>
+
         <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
       </Card.Content>
     </Card>
@@ -41,10 +47,28 @@ export default function DashboardScreen() {
     >
       <Text variant="headlineSmall" style={styles.sectionTitle}>Revenue 💰</Text>
       <View style={styles.grid}>
-        <StatCard title="Today" value={`${dashboard?.today_revenue ?? 0} EGP`} subtitle="Total daily revenue" />
-        <StatCard title="This Month" value={`${dashboard?.month_revenue ?? 0} EGP`} subtitle="Total monthly revenue" />
+        <StatCard 
+          title="Today" 
+          total={dashboard?.today_revenue ?? 0} 
+          hours={dashboard?.today_hours_revenue ?? 0}
+          extras={dashboard?.today_extras_revenue ?? 0}
+          subtitle="Total daily revenue" 
+        />
+        <StatCard 
+          title="This Month" 
+          total={dashboard?.month_revenue ?? 0} 
+          hours={dashboard?.month_hours_revenue ?? 0}
+          extras={dashboard?.month_extras_revenue ?? 0}
+          subtitle="Total monthly revenue" 
+        />
       </View>
-      <StatCard title="Lifetime Revenue" value={`${dashboard?.lifetime_revenue ?? 0} EGP`} subtitle="All time revenue" />
+      <StatCard 
+        title="Lifetime Revenue" 
+        total={dashboard?.lifetime_revenue ?? 0} 
+        hours={dashboard?.lifetime_hours_revenue ?? 0}
+        extras={dashboard?.lifetime_extras_revenue ?? 0}
+        subtitle="All time revenue" 
+      />
 
       <Divider style={styles.divider} />
 
@@ -101,7 +125,19 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: 8,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    backgroundColor: COLORS.background,
+    padding: 8,
+    borderRadius: 8,
+  },
+  breakdownText: {
+    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
   divider: {
     marginVertical: 24,

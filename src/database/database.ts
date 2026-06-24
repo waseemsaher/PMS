@@ -109,5 +109,13 @@ export const initializeDatabase = async () => {
     INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (3, 'Deposit', 50, 1);
   `);
 
+  // Safe Migrations for existing databases
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN today_hours_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN today_extras_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN month_hours_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN month_extras_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN lifetime_hours_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN lifetime_extras_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
+
   console.log('Database initialized successfully.');
 };

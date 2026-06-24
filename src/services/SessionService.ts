@@ -36,6 +36,9 @@ export class SessionService {
       // Calculate total amount (mocked basic logic for now, PRD relies on Settings for pricing)
       // If it's a fixed session, the amount is usually set at creation. If open, calculate here.
       const totalAmount = session.total_amount || 0;
+      
+      const extrasAmount = rentals.reduce((sum, r) => sum + (r.price * r.quantity), 0);
+      const hoursAmount = totalAmount - extrasAmount;
 
       // 5. Insert into History
       await HistoryRepository.createHistoryRecord({
@@ -58,6 +61,8 @@ export class SessionService {
       // 7. Delete Active Customer
       await CustomerRepository.deleteCustomer(customer.id);
 
+      // 8. Update Dashboard
+      await DashboardRepository.addRevenue(hoursAmount, extrasAmount);
       await DashboardRepository.addCustomerCount(customer.people_count);
     });
   }
