@@ -1,9 +1,8 @@
 import { create } from 'zustand';
-import { DashboardRepository } from '../database/repositories/DashboardRepository';
-import { DashboardCache } from '../models/types';
+import { DashboardRepository, DashboardMetrics } from '../database/repositories/DashboardRepository';
 
 interface DashboardState {
-  dashboard: DashboardCache | null;
+  dashboard: DashboardMetrics | null;
   isLoading: boolean;
   error: string | null;
   loadDashboard: () => Promise<void>;
@@ -11,13 +10,13 @@ interface DashboardState {
 
 export const useDashboardStore = create<DashboardState>((set) => ({
   dashboard: null,
-  isLoading: false,
+  isLoading: true,
   error: null,
   loadDashboard: async () => {
     set({ isLoading: true, error: null });
     try {
-      const data = await DashboardRepository.getDashboard();
-      set({ dashboard: data, isLoading: false });
+      const dashboard = await DashboardRepository.getDashboard();
+      set({ dashboard, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }

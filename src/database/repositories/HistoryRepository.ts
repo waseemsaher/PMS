@@ -9,8 +9,9 @@ export class HistoryRepository {
     const result = await db.runAsync(
       `INSERT INTO History (
         customer_name, people_count, session_type, start_timestamp, finish_timestamp, 
-        booked_duration, actual_duration, rentals_json, notes, payment_status, total_amount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        booked_duration, actual_duration, rentals_json, notes, payment_status, total_amount,
+        hours_amount_paid, extras_amount_paid
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         record.customer_name,
         record.people_count,
@@ -23,6 +24,8 @@ export class HistoryRepository {
         record.notes,
         record.payment_status,
         record.total_amount,
+        record.hours_amount_paid,
+        record.extras_amount_paid
       ]
     );
     return result.lastInsertRowId;

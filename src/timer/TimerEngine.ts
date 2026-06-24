@@ -36,9 +36,9 @@ export class TimerEngine {
     const remainingSeconds = endTimestamp - current;
 
     if (remainingSeconds <= 0) {
-      // Expired: count up in negative (e.g., -05:30)
+      // Expired: Clamp at 00:00:00
       return {
-        displayString: `-${this.formatSeconds(Math.abs(remainingSeconds), false)}`,
+        displayString: `00:00:00`,
         status: 'EXPIRED',
         isWarning: false,
         isExpired: true,

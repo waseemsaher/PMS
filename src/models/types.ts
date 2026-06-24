@@ -32,6 +32,8 @@ export interface Session {
   is_open_session: boolean;
   payment_status: PaymentStatus;
   total_amount: number | null;
+  hours_amount_paid: number;
+  extras_amount_paid: number;
   status: SessionStatus;
   created_at: string;
 }
@@ -49,7 +51,8 @@ export interface SessionRental {
   rental_item_id: number;
   quantity: number;
   price: number;
-  paid: boolean;
+  payment_status: PaymentStatus;
+  amount_paid: number;
 }
 
 export interface History {
@@ -65,6 +68,8 @@ export interface History {
   notes: string | null;
   payment_status: PaymentStatus;
   total_amount: number;
+  hours_amount_paid: number;
+  extras_amount_paid: number;
   created_at: string;
 }
 

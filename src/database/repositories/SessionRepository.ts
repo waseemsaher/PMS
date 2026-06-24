@@ -10,8 +10,8 @@ export class SessionRepository {
       `INSERT INTO Sessions (
         customer_id, session_type, start_timestamp, end_timestamp, 
         actual_end_timestamp, duration_minutes, is_open_session, 
-        payment_status, total_amount, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        payment_status, total_amount, hours_amount_paid, extras_amount_paid, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         session.customer_id,
         session.session_type,
@@ -22,6 +22,8 @@ export class SessionRepository {
         session.is_open_session ? 1 : 0,
         session.payment_status,
         session.total_amount,
+        session.hours_amount_paid,
+        session.extras_amount_paid,
         session.status,
       ]
     );

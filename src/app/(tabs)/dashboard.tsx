@@ -23,7 +23,7 @@ export default function DashboardScreen() {
     );
   }
 
-  const StatCard = ({ title, total, hours, extras, subtitle }: { title: string, total: number, hours: number, extras: number, subtitle: string }) => (
+  const RevenueCard = ({ title, total, hours, extras, subtitle }: { title: string, total: number, hours: number, extras: number, subtitle: string }) => (
     <Card style={styles.card} elevation={1}>
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
@@ -39,6 +39,16 @@ export default function DashboardScreen() {
     </Card>
   );
 
+  const DashboardCustomerCard = ({ title, value, subtitle }: { title: string, value: number, subtitle: string }) => (
+    <Card style={styles.card} elevation={1}>
+      <Card.Content>
+        <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
+        <Text variant="headlineLarge" style={styles.cardValue}>{value}</Text>
+        <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
+      </Card.Content>
+    </Card>
+  );
+
   return (
     <ScrollView 
       style={styles.container} 
@@ -47,14 +57,14 @@ export default function DashboardScreen() {
     >
       <Text variant="headlineSmall" style={styles.sectionTitle}>Revenue 💰</Text>
       <View style={styles.grid}>
-        <StatCard 
+        <RevenueCard 
           title="Today" 
           total={dashboard?.today_revenue ?? 0} 
           hours={dashboard?.today_hours_revenue ?? 0}
           extras={dashboard?.today_extras_revenue ?? 0}
           subtitle="Total daily revenue" 
         />
-        <StatCard 
+        <RevenueCard 
           title="This Month" 
           total={dashboard?.month_revenue ?? 0} 
           hours={dashboard?.month_hours_revenue ?? 0}
@@ -62,7 +72,7 @@ export default function DashboardScreen() {
           subtitle="Total monthly revenue" 
         />
       </View>
-      <StatCard 
+      <RevenueCard 
         title="Lifetime Revenue" 
         total={dashboard?.lifetime_revenue ?? 0} 
         hours={dashboard?.lifetime_hours_revenue ?? 0}
@@ -74,10 +84,10 @@ export default function DashboardScreen() {
 
       <Text variant="headlineSmall" style={styles.sectionTitle}>Customers 👥</Text>
       <View style={styles.grid}>
-        <StatCard title="Today" value={dashboard?.today_customers ?? 0} subtitle="People served today" />
-        <StatCard title="This Month" value={dashboard?.month_customers ?? 0} subtitle="People served this month" />
+        <DashboardCustomerCard title="Today" value={dashboard?.today_customers ?? 0} subtitle="People served today" />
+        <DashboardCustomerCard title="This Month" value={dashboard?.month_customers ?? 0} subtitle="People served this month" />
       </View>
-      <StatCard title="Lifetime Customers" value={dashboard?.lifetime_customers ?? 0} subtitle="All time customers" />
+      <DashboardCustomerCard title="Lifetime Customers" value={dashboard?.lifetime_customers ?? 0} subtitle="All time customers" />
 
     </ScrollView>
   );

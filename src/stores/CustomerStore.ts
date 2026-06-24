@@ -4,9 +4,12 @@ import { Session } from '../models/types';
 import { TimerEngine } from '../timer/TimerEngine';
 import { NotificationService } from '../notifications/NotificationService';
 
+import { SessionRental } from '../models/types';
+
 interface ActiveSession extends Session {
   customer_name: string;
   people_count: number;
+  rentals?: (SessionRental & { name: string })[];
 }
 
 export interface ComputedActiveSession extends ActiveSession {
@@ -31,16 +34,27 @@ export const useCustomerStore = create<CustomerState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const sessions = await SessionRepository.getActiveSessions();
-      // Initialize computed fields
-      const computedSessions = sessions.map(s => ({
-        ...s,
-        timerDisplay: '--:--',
-        isWarning: false,
-        isExpired: false,
+      
+      const computedSessions = await Promise.all(sessions.map(async (s) => {
+        // Fetch rentals for each session
+        const { RentalRepository } = require('../database/repositories/RentalRepository');
+        const rentals = await RentalRepository.getRentalsForSession(s.id);
+        
+        return {
+          ...s,
+          rentals,
+          timerDisplay: '--:--',
+          isWarning: false,
+          isExpired: false,
+        };
       }));
 
       // Fire and forget notifications
       NotificationService.processSessionNotifications(computedSessions).catch(console.error);
+
+      // Sync Dashboard automatically
+      const { useDashboardStore } = require('./DashboardStore');
+      useDashboardStore.getState().loadDashboard();
 
       set({ activeSessions: computedSessions, isLoading: false });
     } catch (err: any) {

@@ -11,6 +11,7 @@ import { COLORS } from '../constants/colors';
 import { CustomerRepository } from '../database/repositories/CustomerRepository';
 import { SessionRepository } from '../database/repositories/SessionRepository';
 import { useCustomerStore } from '../stores/CustomerStore';
+import { useSettingsStore } from '../stores/SettingsStore';
 
 // Validation Schema ensuring < 10 seconds error-free data entry
 const customerSchema = z.object({
@@ -19,6 +20,7 @@ const customerSchema = z.object({
   sessionType: z.enum(['HALF_HOUR', 'ONE_HOUR', 'CUSTOM', 'OPEN']),
   customMinutes: z.string().optional(),
   paymentStatus: z.enum(['PAID', 'PARTIAL', 'UNPAID']),
+  amountPaid: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
   if (data.sessionType === 'CUSTOM') {
@@ -29,12 +31,22 @@ const customerSchema = z.object({
 }, {
   message: 'Custom duration must be between 5 and 720 minutes',
   path: ['customMinutes'],
+}).refine(data => {
+  if (data.paymentStatus === 'PARTIAL') {
+    const amount = parseFloat(data.amountPaid || '0');
+    return amount > 0;
+  }
+  return true;
+}, {
+  message: 'Amount paid is required for partial payments',
+  path: ['amountPaid'],
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function AddCustomerScreen() {
   const loadActiveSessions = useCustomerStore(state => state.loadActiveSessions);
+  const { settings } = useSettingsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, handleSubmit, watch, formState: { errors } } = useForm<CustomerFormData>({
@@ -45,11 +57,38 @@ export default function AddCustomerScreen() {
       sessionType: 'ONE_HOUR',
       customMinutes: '',
       paymentStatus: 'PAID',
+      amountPaid: '',
       notes: '',
     }
   });
 
   const sessionType = watch('sessionType');
+  const paymentStatus = watch('paymentStatus');
+  const peopleCountStr = watch('peopleCount');
+  const customMinutesStr = watch('customMinutes');
+  const amountPaidStr = watch('amountPaid');
+
+  const peopleCount = parseInt(peopleCountStr || '0', 10);
+  const customMinutes = parseInt(customMinutesStr || '0', 10);
+  const amountPaidInput = parseFloat(amountPaidStr || '0');
+
+  let calculatedTotal = 0;
+  if (settings && sessionType !== 'OPEN') {
+    if (sessionType === 'HALF_HOUR') {
+      calculatedTotal = (settings.half_hour_price || (settings.hour_price / 2)) * peopleCount;
+    } else if (sessionType === 'ONE_HOUR') {
+      calculatedTotal = settings.hour_price * peopleCount;
+    } else if (sessionType === 'CUSTOM') {
+      calculatedTotal = (settings.hour_price / 60) * customMinutes * peopleCount;
+    }
+  }
+
+  let finalAmountPaid = 0;
+  if (paymentStatus === 'PAID') finalAmountPaid = calculatedTotal;
+  else if (paymentStatus === 'PARTIAL') finalAmountPaid = amountPaidInput;
+  else if (paymentStatus === 'UNPAID') finalAmountPaid = 0;
+
+  const remainingAmount = Math.max(0, calculatedTotal - finalAmountPaid);
 
   const onSubmit = async (data: CustomerFormData) => {
     setIsSubmitting(true);
@@ -83,7 +122,9 @@ export default function AddCustomerScreen() {
         duration_minutes: durationMinutes,
         is_open_session: data.sessionType === 'OPEN',
         payment_status: data.paymentStatus,
-        total_amount: 0, // In full implementation, calculate based on settings
+        total_amount: calculatedTotal,
+        hours_amount_paid: finalAmountPaid,
+        extras_amount_paid: 0,
         status: 'ACTIVE'
       });
 
@@ -209,6 +250,38 @@ export default function AddCustomerScreen() {
         )}
       />
 
+      {sessionType !== 'OPEN' && (
+        <View style={styles.summaryContainer}>
+          <Text variant="titleMedium" style={styles.summaryText}>
+            Total Price: {calculatedTotal} EGP
+          </Text>
+
+          {paymentStatus === 'PARTIAL' && (
+            <Controller
+              control={control}
+              name="amountPaid"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.partialContainer}>
+                  <TextInput
+                    label="Amount Paid *"
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="number-pad"
+                    mode="outlined"
+                    style={styles.input}
+                    error={!!errors.amountPaid}
+                  />
+                  {errors.amountPaid && <HelperText type="error">{errors.amountPaid.message}</HelperText>}
+                  <Text variant="titleSmall" style={styles.remainingText}>
+                    Remaining: {remainingAmount} EGP
+                  </Text>
+                </View>
+              )}
+            />
+          )}
+        </View>
+      )}
+
       <Button 
         mode="contained" 
         onPress={handleSubmit(onSubmit)} 
@@ -247,5 +320,25 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 24,
     paddingVertical: 8,
+  },
+  summaryContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+  },
+  summaryText: {
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  partialContainer: {
+    marginTop: 12,
+  },
+  remainingText: {
+    marginTop: 8,
+    color: COLORS.danger,
+    fontWeight: 'bold',
   }
 });

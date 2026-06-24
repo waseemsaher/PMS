@@ -12,12 +12,13 @@ export class RentalRepository {
     rentalItemId: number,
     quantity: number,
     price: number,
-    paid: boolean
+    paymentStatus: string,
+    amountPaid: number
   ): Promise<number> {
     const db = await getDatabase();
     const result = await db.runAsync(
-      `INSERT INTO SessionRentals (session_id, rental_item_id, quantity, price, paid) VALUES (?, ?, ?, ?, ?)`,
-      [sessionId, rentalItemId, quantity, price, paid ? 1 : 0]
+      `INSERT INTO SessionRentals (session_id, rental_item_id, quantity, price, payment_status, amount_paid) VALUES (?, ?, ?, ?, ?, ?)`,
+      [sessionId, rentalItemId, quantity, price, paymentStatus, amountPaid]
     );
     return result.lastInsertRowId;
   }

@@ -10,6 +10,8 @@ Notifications.setNotificationHandler({
       shouldShowAlert: true,
       shouldPlaySound: settings?.sound_enabled ?? true,
       shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
     };
   },
 });

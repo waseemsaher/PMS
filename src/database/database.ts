@@ -46,6 +46,8 @@ export const initializeDatabase = async () => {
       is_open_session BOOLEAN NOT NULL,
       payment_status TEXT NOT NULL,
       total_amount REAL,
+      hours_amount_paid REAL NOT NULL DEFAULT 0,
+      extras_amount_paid REAL NOT NULL DEFAULT 0,
       status TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES Customers (id) ON DELETE CASCADE
@@ -64,7 +66,8 @@ export const initializeDatabase = async () => {
       rental_item_id INTEGER NOT NULL,
       quantity INTEGER NOT NULL,
       price REAL NOT NULL,
-      paid BOOLEAN NOT NULL DEFAULT 0,
+      payment_status TEXT NOT NULL DEFAULT 'UNPAID',
+      amount_paid REAL NOT NULL DEFAULT 0,
       FOREIGN KEY (session_id) REFERENCES Sessions (id) ON DELETE CASCADE,
       FOREIGN KEY (rental_item_id) REFERENCES RentalItems (id) ON DELETE CASCADE
     );
@@ -82,6 +85,8 @@ export const initializeDatabase = async () => {
       notes TEXT,
       payment_status TEXT NOT NULL,
       total_amount REAL NOT NULL,
+      hours_amount_paid REAL NOT NULL DEFAULT 0,
+      extras_amount_paid REAL NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 

@@ -4,7 +4,7 @@ import { SessionRepository } from '../database/repositories/SessionRepository';
 import { HistoryRepository } from '../database/repositories/HistoryRepository';
 import { DashboardRepository } from '../database/repositories/DashboardRepository';
 import { RentalRepository } from '../database/repositories/RentalRepository';
-import { Session, Customer, SessionRental } from '../models/types';
+import { Session, Customer, SessionRental, PaymentStatus } from '../models/types';
 import dayjs from 'dayjs';
 
 export class SessionService {
@@ -53,6 +53,8 @@ export class SessionService {
         notes: customer.notes,
         payment_status: session.payment_status,
         total_amount: totalAmount,
+        hours_amount_paid: session.hours_amount_paid || 0,
+        extras_amount_paid: session.extras_amount_paid || 0,
       });
 
       // 6. Delete Active Session
@@ -60,10 +62,6 @@ export class SessionService {
 
       // 7. Delete Active Customer
       await CustomerRepository.deleteCustomer(customer.id);
-
-      // 8. Update Dashboard
-      await DashboardRepository.addRevenue(hoursAmount, extrasAmount);
-      await DashboardRepository.addCustomerCount(customer.people_count);
     });
   }
 
@@ -111,25 +109,45 @@ export class SessionService {
   }
 
   /**
-   * Adds an extra rental item to an active session and updates the total amount.
+   * Adds multiple extra rental items to an active session, handling payment status.
    */
-  static async addRentalToSession(sessionId: number, rentalItemId: number, quantity: number, price: number): Promise<void> {
+  static async addRentalsToSession(
+    sessionId: number, 
+    items: { id: number; quantity: number; price: number }[],
+    paymentStatus: PaymentStatus,
+    amountPaid: number
+  ): Promise<void> {
     const db = await getDatabase();
     
     await db.withTransactionAsync(async () => {
       const session = await db.getFirstAsync<Session>('SELECT * FROM Sessions WHERE id = ?', [sessionId]);
       if (!session) throw new Error('Session not found');
 
-      // Add to SessionRentals
-      await RentalRepository.addSessionRental(sessionId, rentalItemId, quantity, price, false);
+      let totalOrderAmount = 0;
 
-      // Increase Session total_amount
-      const amountToAdd = quantity * price;
-      const newTotalAmount = (session.total_amount || 0) + amountToAdd;
+      // Add each item to SessionRentals
+      for (const item of items) {
+        if (item.quantity <= 0) continue;
+        
+        // For individual items, we can just mark them based on the overall payment. 
+        // A partial payment applies to the *order*, so we'll just track the exact amount on the session.
+        await RentalRepository.addSessionRental(
+          sessionId, 
+          item.id, 
+          item.quantity, 
+          item.price, 
+          paymentStatus,
+          paymentStatus === 'PAID' ? (item.quantity * item.price) : 0 // simplify per-item paid tracking
+        );
+        totalOrderAmount += (item.quantity * item.price);
+      }
+
+      const newTotalAmount = (session.total_amount || 0) + totalOrderAmount;
+      const newExtrasPaid = (session.extras_amount_paid || 0) + amountPaid;
 
       await db.runAsync(
-        'UPDATE Sessions SET total_amount = ? WHERE id = ?',
-        [newTotalAmount, sessionId]
+        'UPDATE Sessions SET total_amount = ?, extras_amount_paid = ? WHERE id = ?',
+        [newTotalAmount, newExtrasPaid, sessionId]
       );
     });
   }

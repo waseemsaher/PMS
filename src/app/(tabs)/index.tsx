@@ -78,6 +78,7 @@ export default function HomeScreen() {
               remainingTime={item.timerDisplay}
               isWarning={item.isWarning}
               isExpired={item.isExpired}
+              rentals={item.rentals}
               onEdit={() => router.push({ pathname: '/edit-customer', params: { id: item.id } })}
               onExtend={() => {
                 if (item.is_open_session) {
