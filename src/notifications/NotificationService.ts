@@ -21,9 +21,9 @@ export class NotificationService {
 
   static async setup() {
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('pool-timers', {
+      await Notifications.setNotificationChannelAsync('default', {
         name: 'Pool Timers',
-        importance: Notifications.AndroidImportance.HIGH,
+        importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF231F7C',
       });

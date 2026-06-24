@@ -91,6 +91,7 @@ export default function AddCustomerScreen() {
   const remainingAmount = Math.max(0, calculatedTotal - finalAmountPaid);
 
   const onSubmit = async (data: CustomerFormData) => {
+    let success = false;
     setIsSubmitting(true);
     try {
       // 1. Create Customer
@@ -129,11 +130,17 @@ export default function AddCustomerScreen() {
       });
 
       await loadActiveSessions();
-      router.back();
+      success = true;
     } catch (error) {
       console.error(error);
     } finally {
-      setIsSubmitting(false);
+      if (!success) {
+        setIsSubmitting(false);
+      }
+    }
+
+    if (success) {
+      router.back();
     }
   };
 

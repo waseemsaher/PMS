@@ -35,17 +35,15 @@ export class SessionService {
       
       let totalAmount = session.total_amount || 0;
       let hoursAmount = 0;
+      const extrasAmount = rentals.reduce((sum, r) => sum + (r.price * r.quantity), 0);
 
       if (session.is_open_session) {
         // Calculate price based on actual time for OPEN sessions
         const settingsResult = await db.getFirstAsync<any>('SELECT hour_price FROM Settings WHERE id = 1');
-        if (settingsResult && settingsResult.hour_price) {
-          hoursAmount = (settingsResult.hour_price / 60) * actualDuration;
-        }
+        hoursAmount = Number(((actualDuration / 60) * settingsResult.hour_price).toFixed(2));
         totalAmount += hoursAmount;
       } else {
         // For fixed sessions, the hours amount was included in total_amount
-        const extrasAmount = rentals.reduce((sum, r) => sum + (r.price * r.quantity), 0);
         hoursAmount = Math.max(0, totalAmount - extrasAmount);
       }
 

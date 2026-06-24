@@ -70,6 +70,7 @@ export default function AddExtraScreen() {
       return;
     }
 
+    let success = false;
     setIsSubmitting(true);
     try {
       const items = rentals
@@ -78,11 +79,17 @@ export default function AddExtraScreen() {
 
       await SessionService.addRentalsToSession(sessionId, items, paymentStatus, finalAmountPaid);
       await loadActiveSessions();
-      router.back();
+      success = true;
     } catch (e: any) {
       Alert.alert('Error', e.message);
     } finally {
-      setIsSubmitting(false);
+      if (!success) {
+        setIsSubmitting(false);
+      }
+    }
+
+    if (success) {
+      router.back();
     }
   };
 
