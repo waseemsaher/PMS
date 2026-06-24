@@ -56,10 +56,40 @@ export default function HistoryScreen() {
                 <View style={styles.detailsRow}>
                   <Chip icon="clock-outline" compact style={styles.chip}>{item.actual_duration} mins</Chip>
                   <Chip icon="account-group" compact style={styles.chip}>{item.people_count} pax</Chip>
+                  <Chip icon="information-outline" compact style={styles.chip}>{item.session_type.replace('_', ' ')}</Chip>
                   <Chip icon="cash" compact style={[styles.chip, item.payment_status === 'UNPAID' ? styles.unpaidChip : null]}>
                     {item.total_amount} EGP
                   </Chip>
                 </View>
+
+                <View style={styles.breakdownContainer}>
+                  <Text style={styles.breakdownText}>⏱️ Hours: {item.hours_amount_paid} EGP</Text>
+                  <Text style={styles.breakdownText}>🩳 Extras: {item.extras_amount_paid} EGP</Text>
+                </View>
+
+                {item.rentals_json && JSON.parse(item.rentals_json).length > 0 && (
+                  <View style={styles.rentalsContainer}>
+                    <Text style={styles.rentalsTitle}>Extras Rented:</Text>
+                    {(() => {
+                      const rentals = JSON.parse(item.rentals_json);
+                      const aggregated = rentals.reduce((acc: any[], current: any) => {
+                        const existing = acc.find(r => r.name === current.name);
+                        if (existing) {
+                          existing.quantity += current.quantity;
+                        } else {
+                          acc.push({ ...current });
+                        }
+                        return acc;
+                      }, []);
+
+                      return aggregated.map((r: any, i: number) => (
+                        <Text key={i} style={styles.rentalItem}>
+                          • {r.quantity}x {r.name}
+                        </Text>
+                      ));
+                    })()}
+                  </View>
+                )}
 
                 {item.notes ? (
                   <Text variant="bodySmall" style={styles.notes}>Note: {item.notes}</Text>
@@ -142,5 +172,34 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: 'italic',
     color: COLORS.textSecondary,
+  },
+  breakdownContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+    backgroundColor: COLORS.background,
+    padding: 8,
+    borderRadius: 8,
+  },
+  breakdownText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  rentalsContainer: {
+    backgroundColor: COLORS.background,
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  rentalsTitle: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  rentalItem: {
+    fontSize: 13,
+    color: COLORS.text,
   },
 });

@@ -49,13 +49,10 @@ export class SessionService {
         hoursAmount = Math.max(0, totalAmount - extrasAmount);
       }
 
-      // If the session is finished, we assume any unpaid balance is now paid for the hours
-      // In a real app, a payment modal would pop up here. For now, we auto-pay the open hours.
-      let finalHoursPaid = session.hours_amount_paid || 0;
-      if (session.is_open_session) {
-         finalHoursPaid += hoursAmount;
-         session.payment_status = 'PAID';
-      }
+      // If the session is finished, we assume any unpaid balance is now fully paid at checkout.
+      const finalHoursPaid = hoursAmount;
+      const finalExtrasPaid = extrasAmount;
+      session.payment_status = 'PAID';
 
       // 5. Insert into History
       await HistoryRepository.createHistoryRecord({
@@ -71,7 +68,7 @@ export class SessionService {
         payment_status: session.payment_status,
         total_amount: totalAmount,
         hours_amount_paid: finalHoursPaid,
-        extras_amount_paid: session.extras_amount_paid || 0,
+        extras_amount_paid: finalExtrasPaid,
       });
 
       // 6. Delete Active Session
