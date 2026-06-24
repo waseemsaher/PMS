@@ -80,8 +80,35 @@ export default function HomeScreen() {
               isExpired={item.isExpired}
               onEdit={() => router.push({ pathname: '/edit-customer', params: { id: item.id } })}
               onExtend={() => {
-                // Sprint 4 Extend Logic (Bottom Sheet)
-                Alert.alert('Extend Session', 'Extend functionality to be implemented');
+                if (item.is_open_session) {
+                  Alert.alert('Open Session', 'Open sessions cannot be extended. They run indefinitely until finished.');
+                  return;
+                }
+                Alert.alert(
+                  'Extend Session',
+                  `How much time to add for ${item.customer_name}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: '+ 30 Mins', 
+                      onPress: async () => {
+                        try {
+                          await SessionService.extendSession(item.id, 30);
+                          await loadActiveSessions();
+                        } catch (e: any) { Alert.alert('Error', e.message); }
+                      } 
+                    },
+                    { 
+                      text: '+ 1 Hour', 
+                      onPress: async () => {
+                        try {
+                          await SessionService.extendSession(item.id, 60);
+                          await loadActiveSessions();
+                        } catch (e: any) { Alert.alert('Error', e.message); }
+                      } 
+                    },
+                  ]
+                );
               }}
               onFinish={() => handleFinish(item.id, item.customer_name)}
             />

@@ -58,9 +58,50 @@ export class SessionService {
       // 7. Delete Active Customer
       await CustomerRepository.deleteCustomer(customer.id);
 
-      // 8. Update Dashboard
-      await DashboardRepository.addRevenue(totalAmount);
       await DashboardRepository.addCustomerCount(customer.people_count);
+    });
+  }
+
+  /**
+   * Extends a fixed-duration session by adding minutes to the end_timestamp.
+   */
+  static async extendSession(sessionId: number, additionalMinutes: number): Promise<void> {
+    const db = await getDatabase();
+    
+    await db.withTransactionAsync(async () => {
+      const session = await db.getFirstAsync<Session>('SELECT * FROM Sessions WHERE id = ?', [sessionId]);
+      if (!session) throw new Error('Session not found');
+      if (session.is_open_session) throw new Error('Cannot extend an open session');
+      if (!session.end_timestamp) throw new Error('Session has no end timestamp to extend');
+
+      const additionalSeconds = additionalMinutes * 60;
+      const newEndTimestamp = session.end_timestamp + additionalSeconds;
+
+      // Also adjust the booked duration and total_amount.
+      // To properly calculate the amount, we would need Settings, but for simplicity we will just 
+      // rely on the user editing the amount manually later if it's custom, or we can fetch Settings.
+      const settingsResult = await db.getFirstAsync<any>('SELECT hour_price, half_hour_price FROM Settings WHERE id = 1');
+      
+      let amountToAdd = 0;
+      if (settingsResult) {
+        if (additionalMinutes === 30 && settingsResult.half_hour_price) {
+          amountToAdd = settingsResult.half_hour_price;
+        } else if (additionalMinutes === 60 && settingsResult.hour_price) {
+          amountToAdd = settingsResult.hour_price;
+        } else {
+           // Fallback proportional calculation
+           const pricePerMinute = settingsResult.hour_price / 60;
+           amountToAdd = pricePerMinute * additionalMinutes;
+        }
+      }
+
+      const newTotalAmount = (session.total_amount || 0) + amountToAdd;
+      const newDuration = (session.duration_minutes || 0) + additionalMinutes;
+
+      await db.runAsync(
+        'UPDATE Sessions SET end_timestamp = ?, duration_minutes = ?, total_amount = ?, status = ? WHERE id = ?',
+        [newEndTimestamp, newDuration, newTotalAmount, 'ACTIVE', sessionId]
+      );
     });
   }
 }
