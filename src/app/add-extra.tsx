@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
-import { COLORS } from '../../constants/colors';
-import { RentalRepository } from '../../database/repositories/RentalRepository';
-import { SessionService } from '../../services/SessionService';
-import { RentalItem } from '../../models/types';
-import { useCustomerStore } from '../../stores/CustomerStore';
+import { COLORS } from '../constants/colors';
+import { RentalRepository } from '../database/repositories/RentalRepository';
+import { SessionService } from '../services/SessionService';
+import { RentalItem } from '../models/types';
+import { useCustomerStore } from '../stores/CustomerStore';
 
 export default function AddExtraScreen() {
   const { id } = useLocalSearchParams();
