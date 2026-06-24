@@ -122,5 +122,13 @@ export const initializeDatabase = async () => {
   try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN lifetime_hours_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
   try { await database.execAsync('ALTER TABLE DashboardCache ADD COLUMN lifetime_extras_revenue REAL NOT NULL DEFAULT 0'); } catch (e) {}
 
+  // New Migrations for Refactored Revenue System
+  try { await database.execAsync('ALTER TABLE Sessions ADD COLUMN hours_amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE Sessions ADD COLUMN extras_amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE History ADD COLUMN hours_amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE History ADD COLUMN extras_amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync("ALTER TABLE SessionRentals ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'UNPAID'"); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE SessionRentals ADD COLUMN amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+
   console.log('Database initialized successfully.');
 };

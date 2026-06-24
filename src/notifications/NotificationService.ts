@@ -7,7 +7,6 @@ Notifications.setNotificationHandler({
   handleNotification: async () => {
     const settings = await SettingsRepository.getSettings();
     return {
-      shouldShowAlert: true,
       shouldPlaySound: settings?.sound_enabled ?? true,
       shouldSetBadge: false,
       shouldShowBanner: true,
