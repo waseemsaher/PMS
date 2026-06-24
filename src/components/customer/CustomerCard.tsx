@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, Text, Badge, IconButton, useTheme } from 'react-native-paper';
+import { Card, Text, Chip, Button, Divider } from 'react-native-paper';
 import { COLORS } from '../../constants/colors';
 
 export interface CustomerCardProps {
@@ -89,26 +89,36 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  peopleBadge: {
-    backgroundColor: COLORS.background,
-    color: COLORS.text,
+  timeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
   },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  timerRow: {
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  timer: {
+  timeText: {
+    color: '#fff',
     fontWeight: 'bold',
     fontVariant: ['tabular-nums'],
   },
-  actions: {
-    justifyContent: 'flex-end',
-    paddingHorizontal: 8,
-    paddingBottom: 8,
+  detailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  chip: {
+    backgroundColor: COLORS.background,
+  },
+  unpaidChip: {
+    backgroundColor: COLORS.danger + '20',
+  },
+  divider: {
+    marginBottom: 8,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
   },
 });
