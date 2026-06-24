@@ -44,7 +44,7 @@ export default function AddCustomerScreen() {
       peopleCount: '1',
       sessionType: 'ONE_HOUR',
       customMinutes: '',
-      paymentStatus: 'UNPAID',
+      paymentStatus: 'PAID',
       notes: '',
     }
   });
