@@ -40,7 +40,9 @@ export class SessionService {
       if (session.is_open_session) {
         // Calculate price based on actual time for OPEN sessions
         const settingsResult = await db.getFirstAsync<any>('SELECT hour_price FROM Settings WHERE id = 1');
-        hoursAmount = Number(((actualDuration / 60) * settingsResult.hour_price * customer.people_count).toFixed(2));
+        const hours = actualDuration / 60;
+        // Time Cost = Total Hours * baseRate * Number of People
+        hoursAmount = Number((hours * settingsResult.hour_price * customer.people_count).toFixed(2));
         totalAmount += hoursAmount;
       } else {
         // For fixed sessions, the hours amount was included in total_amount
@@ -99,16 +101,10 @@ export class SessionService {
       const settingsResult = await db.getFirstAsync<any>('SELECT hour_price, half_hour_price FROM Settings WHERE id = 1');
       
       let amountToAdd = 0;
-      if (settingsResult) {
-        if (additionalMinutes === 30 && settingsResult.half_hour_price) {
-          amountToAdd = settingsResult.half_hour_price * peopleCount;
-        } else if (additionalMinutes === 60 && settingsResult.hour_price) {
-          amountToAdd = settingsResult.hour_price * peopleCount;
-        } else {
-           // Fallback proportional calculation
-           const pricePerMinute = (settingsResult.hour_price * peopleCount) / 60;
-           amountToAdd = pricePerMinute * additionalMinutes;
-        }
+      if (settingsResult && settingsResult.hour_price) {
+        const hours = additionalMinutes / 60;
+        // Time Cost = Total Hours * baseRate * Number of People
+        amountToAdd = hours * settingsResult.hour_price * peopleCount;
       }
 
       const newTotalAmount = (session.total_amount || 0) + amountToAdd;
