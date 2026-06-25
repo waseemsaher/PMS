@@ -35,8 +35,7 @@ export interface Session {
   hours_amount_paid: number;
   extras_amount_paid: number;
   status: SessionStatus;
-  custom_hourly_rate?: number | null;
-  created_at?: string;
+  created_at: string;
 }
 
 export interface RentalItem {

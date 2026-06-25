@@ -10,10 +10,13 @@ import { SessionService } from '../../services/SessionService';
 
 export default function HomeScreen() {
   const { activeSessions, isLoading, loadActiveSessions, tickTimers } = useCustomerStore();
-  const { settings } = useSettingsStore();
+  const { settings, loadSettings } = useSettingsStore();
 
   useEffect(() => {
     loadActiveSessions();
+    if (!settings) {
+      loadSettings();
+    }
     
     // Timer Engine: Tick every second to update UI
     const interval = setInterval(() => {
@@ -23,7 +26,7 @@ export default function HomeScreen() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [loadActiveSessions, tickTimers, settings]);
+  }, [loadActiveSessions, tickTimers, settings, loadSettings]);
 
   const handleFinish = (sessionId: number, customerName: string) => {
     Alert.alert(

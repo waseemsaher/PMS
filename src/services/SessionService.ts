@@ -41,9 +41,8 @@ export class SessionService {
         // Calculate price based on actual time for OPEN sessions
         const settingsResult = await db.getFirstAsync<any>('SELECT hour_price FROM Settings WHERE id = 1');
         const hours = actualDuration / 60;
-        const baseRate = session.custom_hourly_rate || settingsResult.hour_price || 60;
         // Time Cost = Total Hours * baseRate * Number of People
-        hoursAmount = Number((hours * baseRate * customer.people_count).toFixed(2));
+        hoursAmount = Number((hours * settingsResult.hour_price * customer.people_count).toFixed(2));
         totalAmount += hoursAmount;
       } else {
         // For fixed sessions, the hours amount was included in total_amount
@@ -102,11 +101,10 @@ export class SessionService {
       const settingsResult = await db.getFirstAsync<any>('SELECT hour_price, half_hour_price FROM Settings WHERE id = 1');
       
       let amountToAdd = 0;
-      const baseRate = session.custom_hourly_rate || (settingsResult ? settingsResult.hour_price : 60);
-      if (baseRate) {
+      if (settingsResult && settingsResult.hour_price) {
         const hours = additionalMinutes / 60;
         // Time Cost = Total Hours * baseRate * Number of People
-        amountToAdd = hours * baseRate * peopleCount;
+        amountToAdd = hours * settingsResult.hour_price * peopleCount;
       }
 
       const newTotalAmount = (session.total_amount || 0) + amountToAdd;

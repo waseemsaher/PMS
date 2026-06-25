@@ -12,8 +12,8 @@ interface SettingsState {
 }
 
 const DEFAULT_SETTINGS: Partial<Settings> = {
-  hour_price: 60,
-  half_hour_price: 30,
+  hour_price: 100,
+  half_hour_price: 50,
   warning_minutes: 5,
   sound_enabled: true,
   vibration_enabled: true,

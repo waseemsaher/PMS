@@ -19,7 +19,6 @@ const customerSchema = z.object({
   peopleCount: z.string().regex(/^[1-9][0-9]?$/, 'Must be 1-99'),
   sessionType: z.enum(['HALF_HOUR', 'ONE_HOUR', 'CUSTOM', 'OPEN']),
   customMinutes: z.string().optional(),
-  customHourlyRate: z.string().optional(),
   paymentStatus: z.enum(['PAID', 'PARTIAL', 'UNPAID']),
   amountPaid: z.string().optional(),
   notes: z.string().optional(),
@@ -47,8 +46,14 @@ type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function AddCustomerScreen() {
   const loadActiveSessions = useCustomerStore(state => state.loadActiveSessions);
-  const { settings } = useSettingsStore();
+  const { settings, loadSettings } = useSettingsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (!settings) {
+      loadSettings();
+    }
+  }, [settings, loadSettings]);
 
   const { control, handleSubmit, watch, formState: { errors } } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -57,7 +62,6 @@ export default function AddCustomerScreen() {
       peopleCount: '1',
       sessionType: 'ONE_HOUR',
       customMinutes: '',
-      customHourlyRate: '',
       paymentStatus: 'PAID',
       amountPaid: '',
       notes: '',
@@ -68,15 +72,11 @@ export default function AddCustomerScreen() {
   const paymentStatus = watch('paymentStatus');
   const peopleCountStr = watch('peopleCount');
   const customMinutesStr = watch('customMinutes');
-  const customHourlyRateStr = watch('customHourlyRate');
   const amountPaidStr = watch('amountPaid');
 
   const peopleCount = parseInt(peopleCountStr || '0', 10);
   const customMinutes = parseInt(customMinutesStr || '0', 10);
   const amountPaidInput = parseFloat(amountPaidStr || '0');
-  
-  const customHourlyRateInput = parseFloat(customHourlyRateStr || '0');
-  const baseRate = customHourlyRateInput > 0 ? customHourlyRateInput : (settings?.hour_price || 60);
 
   let calculatedTotal = 0;
   if (settings && sessionType !== 'OPEN') {
@@ -88,9 +88,8 @@ export default function AddCustomerScreen() {
     } else if (sessionType === 'CUSTOM') {
       hours = customMinutes / 60;
     }
-    // Total Price = (Hours * Hourly Rate * Number of People) + (Extras * Extra Rate)
-    // (Extras are handled separately)
-    calculatedTotal = hours * baseRate * peopleCount;
+    // Time Cost = Total Hours * baseRate * Number of People
+    calculatedTotal = hours * settings.hour_price * peopleCount;
   }
 
   let finalAmountPaid = 0;
@@ -136,8 +135,7 @@ export default function AddCustomerScreen() {
         total_amount: calculatedTotal,
         hours_amount_paid: finalAmountPaid,
         extras_amount_paid: 0,
-        status: 'ACTIVE',
-        custom_hourly_rate: customHourlyRateInput > 0 ? customHourlyRateInput : null
+        status: 'ACTIVE'
       });
 
       await loadActiveSessions();
@@ -234,23 +232,6 @@ export default function AddCustomerScreen() {
           )}
         />
       )}
-
-      <Controller
-        control={control}
-        name="customHourlyRate"
-        render={({ field: { onChange, value } }) => (
-          <View>
-            <TextInput
-              label="Custom Hourly Rate Override (Optional)"
-              value={value}
-              onChangeText={onChange}
-              keyboardType="number-pad"
-              mode="outlined"
-              style={styles.input}
-            />
-          </View>
-        )}
-      />
 
       <Text style={styles.label}>Payment Status</Text>
       <Controller
