@@ -49,6 +49,7 @@ export const initializeDatabase = async () => {
       hours_amount_paid REAL NOT NULL DEFAULT 0,
       extras_amount_paid REAL NOT NULL DEFAULT 0,
       status TEXT NOT NULL,
+      custom_hourly_rate REAL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES Customers (id) ON DELETE CASCADE
     );
@@ -103,15 +104,15 @@ export const initializeDatabase = async () => {
 
     -- Insert default Settings if none exist
     INSERT OR IGNORE INTO Settings (id, hour_price, half_hour_price, warning_minutes, sound_enabled, vibration_enabled) 
-    VALUES (1, 100, 50, 5, 1, 1);
+    VALUES (1, 60, 30, 5, 1, 1);
 
     -- Insert default DashboardCache if none exist
     INSERT OR IGNORE INTO DashboardCache (id) VALUES (1);
     
     -- Insert default Rental Items if none exist
-    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (1, 'Board', 20, 1);
-    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (2, 'Shorts', 30, 1);
-    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (3, 'Deposit', 50, 1);
+    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (1, 'Board', 10, 1);
+    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (2, 'Shorts', 10, 1);
+    INSERT OR IGNORE INTO RentalItems (id, name, default_price, active) VALUES (3, 'Deposit', 10, 1);
   `);
 
   // Safe Migrations for existing databases
@@ -129,6 +130,7 @@ export const initializeDatabase = async () => {
   try { await database.execAsync('ALTER TABLE History ADD COLUMN extras_amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
   try { await database.execAsync("ALTER TABLE SessionRentals ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'UNPAID'"); } catch (e) {}
   try { await database.execAsync('ALTER TABLE SessionRentals ADD COLUMN amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
+  try { await database.execAsync('ALTER TABLE Sessions ADD COLUMN custom_hourly_rate REAL'); } catch (e) {}
 
   console.log('Database initialized successfully.');
 };

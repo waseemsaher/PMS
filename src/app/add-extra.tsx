@@ -18,6 +18,7 @@ export default function AddExtraScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [cart, setCart] = useState<{ [id: number]: number }>({});
+  const [overridePrices, setOverridePrices] = useState<{ [id: number]: string }>({});
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('PAID');
   const [amountPaidStr, setAmountPaidStr] = useState<string>('');
 
@@ -46,7 +47,12 @@ export default function AddExtraScreen() {
   const calculateTotal = () => {
     let total = 0;
     rentals.forEach(r => {
-      total += (cart[r.id] || 0) * r.default_price;
+      const qty = cart[r.id] || 0;
+      if (qty > 0) {
+        const customPriceStr = overridePrices[r.id];
+        const price = customPriceStr ? parseFloat(customPriceStr) : r.default_price;
+        total += qty * price;
+      }
     });
     return total;
   };
@@ -75,7 +81,11 @@ export default function AddExtraScreen() {
     try {
       const items = rentals
         .filter(r => (cart[r.id] || 0) > 0)
-        .map(r => ({ id: r.id, quantity: cart[r.id], price: r.default_price }));
+        .map(r => {
+          const customPriceStr = overridePrices[r.id];
+          const price = customPriceStr ? parseFloat(customPriceStr) : r.default_price;
+          return { id: r.id, quantity: cart[r.id], price };
+        });
 
       await SessionService.addRentalsToSession(sessionId, items, paymentStatus, finalAmountPaid);
       await loadActiveSessions();
@@ -113,19 +123,32 @@ export default function AddExtraScreen() {
               title={item.name}
               subtitle={`${item.default_price} EGP`}
               right={(props) => (
-                <View style={styles.qtyContainer}>
-                  <IconButton 
-                    icon="minus" 
-                    size={20} 
-                    onPress={() => updateCart(item.id, -1)} 
-                    disabled={(cart[item.id] || 0) === 0} 
-                  />
-                  <Text style={styles.qtyText}>{cart[item.id] || 0}</Text>
-                  <IconButton 
-                    icon="plus" 
-                    size={20} 
-                    onPress={() => updateCart(item.id, 1)} 
-                  />
+                <View style={styles.rightActions}>
+                  {(cart[item.id] || 0) > 0 && (
+                    <TextInput
+                      mode="outlined"
+                      label="Rate"
+                      value={overridePrices[item.id] !== undefined ? overridePrices[item.id] : item.default_price.toString()}
+                      onChangeText={(val) => setOverridePrices(prev => ({ ...prev, [item.id]: val }))}
+                      keyboardType="number-pad"
+                      style={styles.rateInput}
+                      dense
+                    />
+                  )}
+                  <View style={styles.qtyContainer}>
+                    <IconButton 
+                      icon="minus" 
+                      size={20} 
+                      onPress={() => updateCart(item.id, -1)} 
+                      disabled={(cart[item.id] || 0) === 0} 
+                    />
+                    <Text style={styles.qtyText}>{cart[item.id] || 0}</Text>
+                    <IconButton 
+                      icon="plus" 
+                      size={20} 
+                      onPress={() => updateCart(item.id, 1)} 
+                    />
+                  </View>
                 </View>
               )}
             />
@@ -197,6 +220,17 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     backgroundColor: COLORS.surface,
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rateInput: {
+    width: 60,
+    marginRight: 8,
+    height: 40,
+    fontSize: 14,
+    backgroundColor: COLORS.background,
   },
   qtyContainer: {
     flexDirection: 'row',
