@@ -132,5 +132,8 @@ export const initializeDatabase = async () => {
   try { await database.execAsync('ALTER TABLE SessionRentals ADD COLUMN amount_paid REAL NOT NULL DEFAULT 0'); } catch (e) {}
   try { await database.execAsync('ALTER TABLE Sessions ADD COLUMN custom_hourly_rate REAL'); } catch (e) {}
 
+  // Migrate old defaults to new defaults if they were never changed
+  try { await database.execAsync('UPDATE Settings SET hour_price = 60, half_hour_price = 30 WHERE id = 1 AND hour_price = 100'); } catch (e) {}
+
   console.log('Database initialized successfully.');
 };
