@@ -40,17 +40,17 @@ export class SessionService {
       if (session.is_open_session) {
         // Calculate price based on actual time for OPEN sessions
         const settingsResult = await db.getFirstAsync<any>('SELECT hour_price FROM Settings WHERE id = 1');
-        hoursAmount = Number(((actualDuration / 60) * settingsResult.hour_price).toFixed(2));
+        hoursAmount = Number(((actualDuration / 60) * settingsResult.hour_price * customer.people_count).toFixed(2));
         totalAmount += hoursAmount;
       } else {
         // For fixed sessions, the hours amount was included in total_amount
         hoursAmount = Math.max(0, totalAmount - extrasAmount);
       }
 
-      // If the session is finished, we assume any unpaid balance is now fully paid at checkout.
-      const finalHoursPaid = hoursAmount;
-      const finalExtrasPaid = extrasAmount;
-      session.payment_status = 'PAID';
+      // Reverting auto-pay assumption as per requirements. 
+      // If the session was unpaid, it remains unpaid in history and does not inflate revenue.
+      const finalHoursPaid = session.hours_amount_paid || 0;
+      const finalExtrasPaid = session.extras_amount_paid || 0;
 
       // 5. Insert into History
       await HistoryRepository.createHistoryRecord({
@@ -89,23 +89,24 @@ export class SessionService {
       if (session.is_open_session) throw new Error('Cannot extend an open session');
       if (!session.end_timestamp) throw new Error('Session has no end timestamp to extend');
 
+      const customer = await db.getFirstAsync<any>('SELECT people_count FROM Customers WHERE id = ?', [session.customer_id]);
+      const peopleCount = customer?.people_count || 1;
+
       const additionalSeconds = additionalMinutes * 60;
       const newEndTimestamp = session.end_timestamp + additionalSeconds;
 
       // Also adjust the booked duration and total_amount.
-      // To properly calculate the amount, we would need Settings, but for simplicity we will just 
-      // rely on the user editing the amount manually later if it's custom, or we can fetch Settings.
       const settingsResult = await db.getFirstAsync<any>('SELECT hour_price, half_hour_price FROM Settings WHERE id = 1');
       
       let amountToAdd = 0;
       if (settingsResult) {
         if (additionalMinutes === 30 && settingsResult.half_hour_price) {
-          amountToAdd = settingsResult.half_hour_price;
+          amountToAdd = settingsResult.half_hour_price * peopleCount;
         } else if (additionalMinutes === 60 && settingsResult.hour_price) {
-          amountToAdd = settingsResult.hour_price;
+          amountToAdd = settingsResult.hour_price * peopleCount;
         } else {
            // Fallback proportional calculation
-           const pricePerMinute = settingsResult.hour_price / 60;
+           const pricePerMinute = (settingsResult.hour_price * peopleCount) / 60;
            amountToAdd = pricePerMinute * additionalMinutes;
         }
       }

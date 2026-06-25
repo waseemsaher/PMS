@@ -14,6 +14,8 @@ export interface CustomerCardProps {
   remainingTime: string;
   isWarning: boolean;
   isExpired: boolean;
+  startTimestamp: number;
+  endTimestamp: number | null;
   rentals?: (SessionRental & { name: string })[];
   onEdit: () => void;
   onExtend: () => void;
@@ -30,6 +32,8 @@ export default function CustomerCard({
   remainingTime,
   isWarning,
   isExpired,
+  startTimestamp,
+  endTimestamp,
   rentals = [],
   onEdit,
   onExtend,
@@ -52,6 +56,16 @@ export default function CustomerCard({
     return acc;
   }, [] as typeof rentals);
 
+  // Import dayjs at the top if not already imported? Wait, let's just format it carefully or import dayjs.
+  // Actually, I should use `new Date(startTimestamp * 1000)` to format the time instead of importing dayjs to be safe.
+  const formatTime = (ts: number) => {
+    const d = new Date(ts * 1000);
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const startStr = formatTime(startTimestamp);
+  const endStr = endTimestamp ? formatTime(endTimestamp) : 'N/A';
+
   return (
     <Card style={[styles.card, isExpired && styles.cardExpired]} elevation={2}>
       <Card.Content>
@@ -71,6 +85,10 @@ export default function CustomerCard({
             {paymentStatus}
           </Chip>
         </View>
+
+        <Text style={styles.metaText}>
+          Started: {startStr} | Ending: {endStr}
+        </Text>
 
         {aggregatedRentals.length > 0 && (
           <View style={styles.rentalsContainer}>
@@ -166,5 +184,11 @@ const styles = StyleSheet.create({
   rentalItem: {
     fontSize: 13,
     color: COLORS.text,
+  },
+  metaText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+    fontFamily: 'monospace',
   }
 });

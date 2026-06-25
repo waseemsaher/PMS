@@ -75,11 +75,11 @@ export default function AddCustomerScreen() {
   let calculatedTotal = 0;
   if (settings && sessionType !== 'OPEN') {
     if (sessionType === 'HALF_HOUR') {
-      calculatedTotal = (settings.half_hour_price || (settings.hour_price / 2));
+      calculatedTotal = (settings.half_hour_price || (settings.hour_price / 2)) * peopleCount;
     } else if (sessionType === 'ONE_HOUR') {
-      calculatedTotal = settings.hour_price;
+      calculatedTotal = settings.hour_price * peopleCount;
     } else if (sessionType === 'CUSTOM') {
-      calculatedTotal = (settings.hour_price / 60) * customMinutes;
+      calculatedTotal = (settings.hour_price / 60) * customMinutes * peopleCount;
     }
   }
 
