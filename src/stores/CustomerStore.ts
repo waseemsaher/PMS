@@ -13,7 +13,6 @@ interface ActiveSession extends Session {
 }
 
 export interface ComputedActiveSession extends ActiveSession {
-  timerDisplay: string;
   isWarning: boolean;
   isExpired: boolean;
 }
@@ -43,7 +42,6 @@ export const useCustomerStore = create<CustomerState>((set) => ({
         return {
           ...s,
           rentals,
-          timerDisplay: '--:--',
           isWarning: false,
           isExpired: false,
         };
@@ -63,6 +61,8 @@ export const useCustomerStore = create<CustomerState>((set) => ({
   },
   tickTimers: (warningMinutes: number) => {
     set((state) => {
+      let hasChanges = false;
+      
       const computedSessions = state.activeSessions.map((session) => {
         const timerState = TimerEngine.calculateState(
           session.start_timestamp,
@@ -71,24 +71,40 @@ export const useCustomerStore = create<CustomerState>((set) => ({
           warningMinutes
         );
         
+        let changed = false;
+
         // Optimistically update DB status if it transitioned to warning or expired
         if (session.status !== timerState.status) {
            SessionRepository.updateSessionStatus(session.id, timerState.status).catch(console.error);
            session.status = timerState.status; // Update local immediately
+           changed = true;
         }
 
-        return {
-          ...session,
-          timerDisplay: timerState.displayString,
-          isWarning: timerState.isWarning,
-          isExpired: timerState.isExpired,
-        };
+        if (session.isWarning !== timerState.isWarning || session.isExpired !== timerState.isExpired) {
+           changed = true;
+        }
+
+        if (changed) {
+          hasChanges = true;
+          return {
+            ...session,
+            isWarning: timerState.isWarning,
+            isExpired: timerState.isExpired,
+          };
+        }
+
+        return session;
       });
 
       // Fire grouped notifications!
       NotificationService.processSessionNotifications(computedSessions).catch(console.error);
 
-      return { activeSessions: computedSessions };
+      // If nothing changed status-wise, return the exact same state array reference!
+      // This completely blocks Zustand from triggering React re-renders.
+      if (hasChanges) {
+        return { activeSessions: computedSessions };
+      }
+      return state;
     });
   },
 }));

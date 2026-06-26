@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, FAB, ActivityIndicator } from 'react-native-paper';
 import { router } from 'expo-router';
@@ -18,17 +18,17 @@ export default function HomeScreen() {
       loadSettings();
     }
     
-    // Timer Engine: Tick every second to update UI
+    // Global Background Engine: Tick every 5 seconds to check DB status and fire notifications
     const interval = setInterval(() => {
       // Use 5 as fallback if settings haven't loaded
       const warningMinutes = settings?.warning_minutes || 5;
       tickTimers(warningMinutes);
-    }, 1000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [loadActiveSessions, tickTimers, settings, loadSettings]);
 
-  const handleFinish = (sessionId: number, customerName: string) => {
+  const handleFinish = useCallback((sessionId: number, customerName: string) => {
     Alert.alert(
       'Finish Session?',
       `Are you sure you want to finish ${customerName}'s session?`,
@@ -47,7 +47,47 @@ export default function HomeScreen() {
         },
       ]
     );
-  };
+  }, [loadActiveSessions]);
+
+  const handleEdit = useCallback((id: number) => {
+    router.push({ pathname: '/edit-customer', params: { id } });
+  }, []);
+
+  const handleExtras = useCallback((id: number) => {
+    router.push({ pathname: '/add-extra', params: { id } });
+  }, []);
+
+  const handleExtend = useCallback((id: number, customerName: string, isOpen: boolean) => {
+    if (isOpen) {
+      Alert.alert('Open Session', 'Open sessions cannot be extended. They run indefinitely until finished.');
+      return;
+    }
+    Alert.alert(
+      'Extend Session',
+      `How much time to add for ${customerName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: '+ 30 Mins', 
+          onPress: async () => {
+            try {
+              await SessionService.extendSession(id, 30);
+              await loadActiveSessions();
+            } catch (e: any) { Alert.alert('Error', e.message); }
+          } 
+        },
+        { 
+          text: '+ 1 Hour', 
+          onPress: async () => {
+            try {
+              await SessionService.extendSession(id, 60);
+              await loadActiveSessions();
+            } catch (e: any) { Alert.alert('Error', e.message); }
+          } 
+        },
+      ]
+    );
+  }, [loadActiveSessions]);
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -78,46 +118,17 @@ export default function HomeScreen() {
               peopleCount={item.people_count}
               sessionType={item.session_type}
               paymentStatus={item.payment_status}
-              remainingTime={item.timerDisplay}
+              isOpenSession={item.is_open_session}
+              warningMinutes={settings?.warning_minutes || 5}
               isWarning={item.isWarning}
               isExpired={item.isExpired}
               startTimestamp={item.start_timestamp}
               endTimestamp={item.end_timestamp}
               rentals={item.rentals}
-              onEdit={() => router.push({ pathname: '/edit-customer', params: { id: item.id } })}
-              onExtend={() => {
-                if (item.is_open_session) {
-                  Alert.alert('Open Session', 'Open sessions cannot be extended. They run indefinitely until finished.');
-                  return;
-                }
-                Alert.alert(
-                  'Extend Session',
-                  `How much time to add for ${item.customer_name}?`,
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: '+ 30 Mins', 
-                      onPress: async () => {
-                        try {
-                          await SessionService.extendSession(item.id, 30);
-                          await loadActiveSessions();
-                        } catch (e: any) { Alert.alert('Error', e.message); }
-                      } 
-                    },
-                    { 
-                      text: '+ 1 Hour', 
-                      onPress: async () => {
-                        try {
-                          await SessionService.extendSession(item.id, 60);
-                          await loadActiveSessions();
-                        } catch (e: any) { Alert.alert('Error', e.message); }
-                      } 
-                    },
-                  ]
-                );
-              }}
-              onExtras={() => router.push({ pathname: '/add-extra', params: { id: item.id } })}
-              onFinish={() => handleFinish(item.id, item.customer_name)}
+              onEdit={handleEdit}
+              onExtend={handleExtend}
+              onExtras={handleExtras}
+              onFinish={handleFinish}
             />
           )}
         />

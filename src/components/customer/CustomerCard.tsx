@@ -4,6 +4,7 @@ import { Card, Text, Chip, Button, Divider } from 'react-native-paper';
 import { COLORS } from '../../constants/colors';
 
 import { SessionRental } from '../../models/types';
+import { useSessionTimer } from '../../hooks/useSessionTimer';
 
 export interface CustomerCardProps {
   id: number;
@@ -11,25 +12,27 @@ export interface CustomerCardProps {
   peopleCount: number;
   sessionType: string;
   paymentStatus: string;
-  remainingTime: string;
+  isOpenSession: boolean;
+  warningMinutes: number;
   isWarning: boolean;
   isExpired: boolean;
   startTimestamp: number;
   endTimestamp: number | null;
   rentals?: (SessionRental & { name: string })[];
-  onEdit: () => void;
-  onExtend: () => void;
-  onExtras: () => void;
-  onFinish: () => void;
+  onEdit: (id: number) => void;
+  onExtend: (id: number, customerName: string, isOpen: boolean) => void;
+  onExtras: (id: number) => void;
+  onFinish: (id: number, customerName: string) => void;
 }
 
-export default function CustomerCard({
+const CustomerCard = ({
   id,
   customerName,
   peopleCount,
   sessionType,
   paymentStatus,
-  remainingTime,
+  isOpenSession,
+  warningMinutes,
   isWarning,
   isExpired,
   startTimestamp,
@@ -39,7 +42,9 @@ export default function CustomerCard({
   onExtend,
   onExtras,
   onFinish,
-}: CustomerCardProps) {
+}: CustomerCardProps) => {
+  const timerDisplay = useSessionTimer(startTimestamp, endTimestamp, isOpenSession, warningMinutes);
+
   const getCardColor = () => {
     if (isExpired) return COLORS.danger;
     if (isWarning) return COLORS.warning;
@@ -72,7 +77,7 @@ export default function CustomerCard({
         <View style={styles.headerRow}>
           <Text variant="titleLarge" style={styles.name}>{customerName}</Text>
           <View style={[styles.timeBadge, { backgroundColor: getCardColor() }]}>
-            <Text style={styles.timeText}>{remainingTime}</Text>
+            <Text style={styles.timeText}>{timerDisplay}</Text>
           </View>
         </View>
 
@@ -104,17 +109,19 @@ export default function CustomerCard({
         <Divider style={styles.divider} />
 
         <View style={styles.actionsRow}>
-          <Button icon="pencil" mode="text" compact onPress={onEdit}>Edit</Button>
-          <Button icon="clock-plus" mode="text" compact onPress={onExtend}>Extend</Button>
-          <Button icon="plus-box" mode="text" compact onPress={onExtras}>Extras</Button>
-          <Button icon="check-circle" mode="contained" buttonColor={COLORS.success} compact onPress={onFinish}>
+          <Button icon="pencil" mode="text" compact onPress={() => onEdit(id)}>Edit</Button>
+          <Button icon="clock-plus" mode="text" compact onPress={() => onExtend(id, customerName, isOpenSession)}>Extend</Button>
+          <Button icon="plus-box" mode="text" compact onPress={() => onExtras(id)}>Extras</Button>
+          <Button icon="check-circle" mode="contained" buttonColor={COLORS.success} compact onPress={() => onFinish(id, customerName)}>
             Finish
           </Button>
         </View>
       </Card.Content>
     </Card>
   );
-}
+};
+
+export default React.memo(CustomerCard);
 
 const styles = StyleSheet.create({
   card: {
