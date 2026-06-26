@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, IconButton, SegmentedButtons, TextInput, HelperText } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -6,6 +6,41 @@ import { COLORS } from '../constants/colors';
 import { RentalRepository } from '../database/repositories/RentalRepository';
 import { RentalItem, PaymentStatus } from '../models/types';
 import { useSessionMutations } from '../hooks/useSessionMutations';
+
+const ExtraRentalCard = React.memo(({ 
+  item, 
+  quantity, 
+  onUpdateCart 
+}: { 
+  item: RentalItem; 
+  quantity: number; 
+  onUpdateCart: (id: number, delta: number) => void 
+}) => {
+  return (
+    <Card style={styles.card} mode="outlined">
+      <Card.Title
+        title={item.name}
+        subtitle={`${item.default_price} EGP`}
+        right={(props) => (
+          <View style={styles.qtyContainer}>
+            <IconButton 
+              icon="minus" 
+              size={20} 
+              onPress={() => onUpdateCart(item.id, -1)} 
+              disabled={quantity === 0} 
+            />
+            <Text style={styles.qtyText}>{quantity}</Text>
+            <IconButton 
+              icon="plus" 
+              size={20} 
+              onPress={() => onUpdateCart(item.id, 1)} 
+            />
+          </View>
+        )}
+      />
+    </Card>
+  );
+});
 
 export default function AddExtraScreen() {
   const { id } = useLocalSearchParams();
@@ -34,13 +69,13 @@ export default function AddExtraScreen() {
     load();
   }, []);
 
-  const updateCart = (id: number, delta: number) => {
+  const updateCart = useCallback((itemId: number, delta: number) => {
     setCart(prev => {
-      const current = prev[id] || 0;
+      const current = prev[itemId] || 0;
       const next = Math.max(0, current + delta);
-      return { ...prev, [id]: next };
+      return { ...prev, [itemId]: next };
     });
-  };
+  }, []);
 
   const calculateTotal = () => {
     let total = 0;
@@ -91,6 +126,16 @@ export default function AddExtraScreen() {
     }
   };
 
+  const renderItem = useCallback(({ item }: { item: RentalItem }) => (
+    <ExtraRentalCard 
+      item={item} 
+      quantity={cart[item.id] || 0} 
+      onUpdateCart={updateCart} 
+    />
+  ), [cart, updateCart]);
+
+  const keyExtractor = useCallback((item: RentalItem) => item.id.toString(), []);
+
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -103,32 +148,13 @@ export default function AddExtraScreen() {
     <View style={styles.container}>
       <FlatList
         data={rentals}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <Card style={styles.card} mode="outlined">
-            <Card.Title
-              title={item.name}
-              subtitle={`${item.default_price} EGP`}
-              right={(props) => (
-                <View style={styles.qtyContainer}>
-                  <IconButton 
-                    icon="minus" 
-                    size={20} 
-                    onPress={() => updateCart(item.id, -1)} 
-                    disabled={(cart[item.id] || 0) === 0} 
-                  />
-                  <Text style={styles.qtyText}>{cart[item.id] || 0}</Text>
-                  <IconButton 
-                    icon="plus" 
-                    size={20} 
-                    onPress={() => updateCart(item.id, 1)} 
-                  />
-                </View>
-              )}
-            />
-          </Card>
-        )}
+        renderItem={renderItem}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
       />
 
       <View style={styles.bottomBar}>

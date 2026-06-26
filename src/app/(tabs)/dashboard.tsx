@@ -1,8 +1,42 @@
 import React, { useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Text, Card, ActivityIndicator, useTheme, Divider } from 'react-native-paper';
+import { Text, Card, ActivityIndicator, Divider } from 'react-native-paper';
 import { COLORS } from '../../constants/colors';
 import { useDashboardStore } from '../../stores/DashboardStore';
+
+const RevenueCard = React.memo(({ 
+  title, total, hours, extras, subtitle 
+}: { 
+  title: string, total: number, hours: number, extras: number, subtitle: string 
+}) => (
+  <Card style={styles.card} elevation={1}>
+    <Card.Content>
+      <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
+      <Text variant="headlineLarge" style={styles.cardValue}>{total} EGP</Text>
+      
+      <View style={styles.breakdownRow}>
+        <Text variant="bodyMedium" style={styles.breakdownText}>⏱️ {hours} EGP</Text>
+        <Text variant="bodyMedium" style={styles.breakdownText}>🩳 {extras} EGP</Text>
+      </View>
+
+      <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
+    </Card.Content>
+  </Card>
+));
+
+const DashboardCustomerCard = React.memo(({ 
+  title, value, subtitle 
+}: { 
+  title: string, value: number, subtitle: string 
+}) => (
+  <Card style={styles.card} elevation={1}>
+    <Card.Content>
+      <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
+      <Text variant="headlineLarge" style={styles.cardValue}>{value}</Text>
+      <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
+    </Card.Content>
+  </Card>
+));
 
 export default function DashboardScreen() {
   const { dashboard, isLoading, loadDashboard } = useDashboardStore();
@@ -22,32 +56,6 @@ export default function DashboardScreen() {
       </View>
     );
   }
-
-  const RevenueCard = ({ title, total, hours, extras, subtitle }: { title: string, total: number, hours: number, extras: number, subtitle: string }) => (
-    <Card style={styles.card} elevation={1}>
-      <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
-        <Text variant="headlineLarge" style={styles.cardValue}>{total} EGP</Text>
-        
-        <View style={styles.breakdownRow}>
-          <Text variant="bodyMedium" style={styles.breakdownText}>⏱️ {hours} EGP</Text>
-          <Text variant="bodyMedium" style={styles.breakdownText}>🩳 {extras} EGP</Text>
-        </View>
-
-        <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
-      </Card.Content>
-    </Card>
-  );
-
-  const DashboardCustomerCard = ({ title, value, subtitle }: { title: string, value: number, subtitle: string }) => (
-    <Card style={styles.card} elevation={1}>
-      <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>{title}</Text>
-        <Text variant="headlineLarge" style={styles.cardValue}>{value}</Text>
-        <Text variant="bodySmall" style={styles.cardSubtitle}>{subtitle}</Text>
-      </Card.Content>
-    </Card>
-  );
 
   return (
     <ScrollView 
