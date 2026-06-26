@@ -23,11 +23,11 @@ const customerSchema = z.object({
 }).refine(data => {
   if (data.sessionType === 'CUSTOM') {
     const mins = parseInt(data.customMinutes || '0', 10);
-    return mins >= 5 && mins <= 720;
+    return mins >= 1 && mins <= 720;
   }
   return true;
 }, {
-  message: 'Custom duration must be between 5 and 720 minutes',
+  message: 'Custom duration must be between 1 and 720 minutes',
   path: ['customMinutes'],
 }).refine(data => {
   if (data.paymentStatus === 'PARTIAL') {

@@ -94,21 +94,16 @@ export class NotificationService {
   private static async sendLocalNotification(title: string, body: string) {
     const settings = await SettingsRepository.getSettings();
     const shouldVibrate = settings?.vibration_enabled ?? true;
+    const shouldPlaySound = settings?.sound_enabled ?? true;
 
     // Trigger local notification immediately
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
-        sound: settings?.sound_enabled ?? true,
-        // Hack for Android vibration overrides if configured globally in channel
+        sound: shouldPlaySound,
       },
-      trigger: null, // trigger immediately
+      trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
     });
-
-    if (shouldVibrate && Platform.OS === 'android') {
-        // Expo notifications handles channel vibrations, but we can also use react-native Vibration
-        // if needed. We'll rely on the channel configuration for now.
-    }
   }
 }
