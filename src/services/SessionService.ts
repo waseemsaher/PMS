@@ -9,6 +9,59 @@ import dayjs from 'dayjs';
 
 export class SessionService {
   /**
+   * Creates a new customer and their initial session in a single atomic flow.
+   */
+  static async createCustomerSession(data: {
+    fullName: string;
+    peopleCount: number;
+    notes?: string | null;
+    sessionType: 'HALF_HOUR' | 'ONE_HOUR' | 'CUSTOM' | 'OPEN';
+    customMinutes?: number;
+    paymentStatus: PaymentStatus;
+    calculatedTotal: number;
+    finalAmountPaid: number;
+  }): Promise<void> {
+    const db = await getDatabase();
+
+    await db.withTransactionAsync(async () => {
+      // 1. Create Customer
+      const customerId = await CustomerRepository.createCustomer(
+        data.fullName, 
+        data.peopleCount, 
+        data.notes || null
+      );
+
+      // 2. Determine duration
+      let durationMinutes = null;
+      if (data.sessionType === 'HALF_HOUR') durationMinutes = 30;
+      else if (data.sessionType === 'ONE_HOUR') durationMinutes = 60;
+      else if (data.sessionType === 'CUSTOM' && data.customMinutes) durationMinutes = data.customMinutes;
+
+      // 3. Create Session
+      const startTimestamp = dayjs().unix();
+      let endTimestamp = null;
+      if (durationMinutes) {
+        endTimestamp = startTimestamp + (durationMinutes * 60);
+      }
+
+      await SessionRepository.createSession({
+        customer_id: customerId,
+        session_type: data.sessionType,
+        start_timestamp: startTimestamp,
+        end_timestamp: endTimestamp,
+        actual_end_timestamp: null,
+        duration_minutes: durationMinutes,
+        is_open_session: data.sessionType === 'OPEN',
+        payment_status: data.paymentStatus,
+        total_amount: data.calculatedTotal,
+        hours_amount_paid: data.finalAmountPaid,
+        extras_amount_paid: 0,
+        status: 'ACTIVE'
+      });
+    });
+  }
+
+  /**
    * Finishes an active session.
    * Follows the exact transaction flow from the PRD.
    */

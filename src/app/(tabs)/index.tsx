@@ -1,32 +1,15 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, FAB, ActivityIndicator } from 'react-native-paper';
 import { router } from 'expo-router';
 import { COLORS } from '../../constants/colors';
-import { useCustomerStore } from '../../stores/CustomerStore';
-import { useSettingsStore } from '../../stores/SettingsStore';
 import CustomerCard from '../../components/customer/CustomerCard';
-import { SessionService } from '../../services/SessionService';
+import { useActiveSessionsManager } from '../../hooks/useActiveSessionsManager';
+import { useSessionMutations } from '../../hooks/useSessionMutations';
 
 export default function HomeScreen() {
-  const { activeSessions, isLoading, loadActiveSessions, tickTimers } = useCustomerStore();
-  const { settings, loadSettings } = useSettingsStore();
-
-  useEffect(() => {
-    loadActiveSessions();
-    if (!settings) {
-      loadSettings();
-    }
-    
-    // Global Background Engine: Tick every 5 seconds to check DB status and fire notifications
-    const interval = setInterval(() => {
-      // Use 5 as fallback if settings haven't loaded
-      const warningMinutes = settings?.warning_minutes || 5;
-      tickTimers(warningMinutes);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [loadActiveSessions, tickTimers, settings, loadSettings]);
+  const { activeSessions, isLoading, settings } = useActiveSessionsManager();
+  const { finishSession, extendSession } = useSessionMutations();
 
   const handleFinish = useCallback((sessionId: number, customerName: string) => {
     Alert.alert(
@@ -38,8 +21,7 @@ export default function HomeScreen() {
           text: 'Finish', 
           onPress: async () => {
             try {
-              await SessionService.finishSession(sessionId);
-              await loadActiveSessions();
+              await finishSession(sessionId);
             } catch (err) {
               Alert.alert('Error', 'Could not finish session');
             }
@@ -47,7 +29,7 @@ export default function HomeScreen() {
         },
       ]
     );
-  }, [loadActiveSessions]);
+  }, [finishSession]);
 
   const handleEdit = useCallback((id: number) => {
     router.push({ pathname: '/edit-customer', params: { id } });
@@ -71,8 +53,7 @@ export default function HomeScreen() {
           text: '+ 30 Mins', 
           onPress: async () => {
             try {
-              await SessionService.extendSession(id, 30);
-              await loadActiveSessions();
+              await extendSession(id, 30);
             } catch (e: any) { Alert.alert('Error', e.message); }
           } 
         },
@@ -80,14 +61,13 @@ export default function HomeScreen() {
           text: '+ 1 Hour', 
           onPress: async () => {
             try {
-              await SessionService.extendSession(id, 60);
-              await loadActiveSessions();
+              await extendSession(id, 60);
             } catch (e: any) { Alert.alert('Error', e.message); }
           } 
         },
       ]
     );
-  }, [loadActiveSessions]);
+  }, [extendSession]);
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>

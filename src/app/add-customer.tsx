@@ -8,10 +8,8 @@ import { router } from 'expo-router';
 import dayjs from 'dayjs';
 
 import { COLORS } from '../constants/colors';
-import { CustomerRepository } from '../database/repositories/CustomerRepository';
-import { SessionRepository } from '../database/repositories/SessionRepository';
-import { useCustomerStore } from '../stores/CustomerStore';
 import { useSettingsStore } from '../stores/SettingsStore';
+import { useSessionMutations } from '../hooks/useSessionMutations';
 
 // Validation Schema ensuring < 10 seconds error-free data entry
 const customerSchema = z.object({
@@ -45,8 +43,8 @@ const customerSchema = z.object({
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function AddCustomerScreen() {
-  const loadActiveSessions = useCustomerStore(state => state.loadActiveSessions);
   const { settings, loadSettings } = useSettingsStore();
+  const { createCustomerSession } = useSessionMutations();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
@@ -103,42 +101,17 @@ export default function AddCustomerScreen() {
     let success = false;
     setIsSubmitting(true);
     try {
-      // 1. Create Customer
-      const customerId = await CustomerRepository.createCustomer(
-        data.fullName, 
-        parseInt(data.peopleCount, 10), 
-        data.notes || null
-      );
-
-      // 2. Determine duration
-      let durationMinutes = null;
-      if (data.sessionType === 'HALF_HOUR') durationMinutes = 30;
-      else if (data.sessionType === 'ONE_HOUR') durationMinutes = 60;
-      else if (data.sessionType === 'CUSTOM') durationMinutes = parseInt(data.customMinutes || '0', 10);
-
-      // 3. Create Session
-      const startTimestamp = dayjs().unix();
-      let endTimestamp = null;
-      if (durationMinutes) {
-        endTimestamp = startTimestamp + (durationMinutes * 60);
-      }
-
-      await SessionRepository.createSession({
-        customer_id: customerId,
-        session_type: data.sessionType,
-        start_timestamp: startTimestamp,
-        end_timestamp: endTimestamp,
-        actual_end_timestamp: null,
-        duration_minutes: durationMinutes,
-        is_open_session: data.sessionType === 'OPEN',
-        payment_status: data.paymentStatus,
-        total_amount: calculatedTotal,
-        hours_amount_paid: finalAmountPaid,
-        extras_amount_paid: 0,
-        status: 'ACTIVE'
+      await createCustomerSession({
+        fullName: data.fullName,
+        peopleCount,
+        notes: data.notes,
+        sessionType: data.sessionType as any,
+        customMinutes,
+        paymentStatus: data.paymentStatus as any,
+        calculatedTotal,
+        finalAmountPaid,
       });
 
-      await loadActiveSessions();
       success = true;
     } catch (error) {
       console.error(error);

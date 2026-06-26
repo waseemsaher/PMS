@@ -4,14 +4,13 @@ import { Text, Card, Button, ActivityIndicator, IconButton, SegmentedButtons, Te
 import { useLocalSearchParams, router } from 'expo-router';
 import { COLORS } from '../constants/colors';
 import { RentalRepository } from '../database/repositories/RentalRepository';
-import { SessionService } from '../services/SessionService';
 import { RentalItem, PaymentStatus } from '../models/types';
-import { useCustomerStore } from '../stores/CustomerStore';
+import { useSessionMutations } from '../hooks/useSessionMutations';
 
 export default function AddExtraScreen() {
   const { id } = useLocalSearchParams();
   const sessionId = parseInt(id as string, 10);
-  const { loadActiveSessions } = useCustomerStore();
+  const { addExtras } = useSessionMutations();
 
   const [rentals, setRentals] = useState<RentalItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,8 +76,7 @@ export default function AddExtraScreen() {
         .filter(r => (cart[r.id] || 0) > 0)
         .map(r => ({ id: r.id, quantity: cart[r.id], price: r.default_price }));
 
-      await SessionService.addRentalsToSession(sessionId, items, paymentStatus, finalAmountPaid);
-      await loadActiveSessions();
+      await addExtras(sessionId, items, paymentStatus, finalAmountPaid);
       success = true;
     } catch (e: any) {
       Alert.alert('Error', e.message);
