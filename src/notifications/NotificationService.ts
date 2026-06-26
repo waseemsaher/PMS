@@ -5,9 +5,9 @@ import { SettingsRepository } from '../database/repositories/SettingsRepository'
 // Configure notification behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => {
-    const settings = await SettingsRepository.getSettings();
     return {
-      shouldPlaySound: settings?.sound_enabled ?? true,
+      shouldShowAlert: true, // Legacy support
+      shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,
@@ -103,7 +103,7 @@ export class NotificationService {
         body,
         sound: shouldPlaySound,
       },
-      trigger: Platform.OS === 'android' ? { channelId: 'default' } : null,
+      trigger: Platform.OS === 'android' ? { seconds: 1, channelId: 'default' } : null,
     });
   }
 }
